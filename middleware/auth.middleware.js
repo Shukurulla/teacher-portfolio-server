@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
   try {
     // JWT tokenni tekshiramiz (agar JWT bo'lsa)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.userData = decoded;
     next();
   } catch (error) {
     return res.status(403).json({ message: "Forbidden" });
