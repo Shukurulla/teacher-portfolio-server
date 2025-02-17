@@ -15,7 +15,6 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Faqat `public` papkasini ochiq qilamiz, `files` emas
 app.use("/public", express.static("public"));
 
 // 📌 `files` ichidagi fayllarni token bilan olish
