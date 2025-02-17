@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/public", express.static("public"));
 
 // 📌 `files` ichidagi fayllarni token bilan olish
-app.get("/files/:filename", authMiddleware, (req, res) => {
+app.get("/files/:filename", (req, res) => {
   const { filename } = req.params;
   const filePath = path.join(process.cwd(), "public", "files", filename);
 
