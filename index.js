@@ -11,7 +11,7 @@ import authMiddleware from "./middleware/auth.middleware.js";
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: ["*", "https://teacher-portfolio-client.vercel.app"] }));
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
