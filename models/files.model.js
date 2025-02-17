@@ -6,6 +6,9 @@ const fileSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    fileName: {
+      type: String,
+    },
     from: {
       id: {
         type: mongoose.Types.ObjectId,
@@ -47,6 +50,7 @@ const fileSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "Tekshirilmoqda",
+      enum: ["Tekshirilmoqda", "Tasdiqlandi", "Tasdiqlanmadi"],
     },
     resultMessage: {
       type: String,

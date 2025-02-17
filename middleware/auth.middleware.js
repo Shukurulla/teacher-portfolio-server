@@ -1,13 +1,19 @@
 import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
   try {
-    const token = req.headers.authorization.split(" ")[1];
+    // JWT tokenni tekshiramiz (agar JWT bo'lsa)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userData = decoded;
+    req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Autentifikatsiya amalga oshmadi" });
+    return res.status(403).json({ message: "Forbidden" });
   }
 };
 

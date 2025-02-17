@@ -54,7 +54,11 @@ router.post("/file/upload", async (req, res) => {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    const fileName = `${Date.now()}_${file.name}`;
+    // Fayl kengaytmasini olish (masalan .docx, .jpg)
+    const fileExtension = path.extname(file.name);
+
+    // Fayl nomini yaratish: hozirgi vaqt + kengaytma
+    const fileName = `${Date.now()}${fileExtension}`;
     const filePath = path.join(uploadDir, fileName);
 
     // Faylni saqlash
@@ -73,6 +77,7 @@ router.post("/file/upload", async (req, res) => {
       const newFile = new fileModel({
         fileUrl,
         title,
+        fileName, // MongoDB modeliga fileName ni qo‘shamiz
         from: {
           id: req.body.teacherId, // `from.id` ma'lumoti (tashqi ma'lumot)
           firstName: findTeacher.firstName,
@@ -105,6 +110,17 @@ router.post("/file/upload", async (req, res) => {
   }
 });
 
+router.get("/new-files", async (req, res) => {
+  try {
+    const files = await fileModel.find({ status: "Tekshirilmoqda" });
+    res.status(200).json({ status: "success", data: files });
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ status: "error", message: error.message });
+  }
+});
+
 router.get("/file/my-files/", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.userData;
@@ -124,6 +140,28 @@ router.delete("/file/delete/:id", async (req, res) => {
     res
       .status(error.status || 500)
       .json({ status: "error", message: error.message });
+  }
+});
+
+router.post("/file/accept/:id", async (req, res) => {
+  try {
+    const findFile = await fileModel.findById(req.params.id);
+    if (!findFile) {
+      return res.json({ status: "error", message: "Bunday file mavjud emas" });
+    } else if (findFile.status !== "Tekshirilmoqda") return;
+
+    const acceptFile = await fileModel.findByIdAndUpdate(
+      findFile._id,
+      {
+        $set: {
+          status: "Tasdiqlandi",
+        },
+      },
+      { new: true }
+    );
+    res.json({ data: acceptFile, status: "success" });
+  } catch (error) {
+    res.json({ status: "error", message: error.message });
   }
 });
 
