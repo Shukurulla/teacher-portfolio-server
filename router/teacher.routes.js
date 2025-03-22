@@ -101,7 +101,7 @@ router.get("/teacher/profile", authMiddleware, async (req, res) => {
       .json({ message: error.message, status: "error" });
   }
 });
-router.get("/teacher/all", authMiddleware, async (req, res) => {
+router.get("/teacher/all", async (req, res) => {
   try {
     const teachers = await teacherModel.find();
     res.status(200).json({ status: "success", data: teachers });
@@ -132,74 +132,99 @@ router.get("/teacher/:id", authMiddleware, async (req, res) => {
 router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    const updateData = {};
 
-    // Parolni o'zgartirishni taqiqlash
+    console.log("O‘qituvchi ID:", id);
+    console.log("Tushgan ma'lumotlar:", req.body);
+
+    // Teacherni topamiz
+    const teacher = await teacherModel.findById(id);
+    if (!teacher) {
+      return res.status(404).json({
+        status: "error",
+        message: "O'qituvchi topilmadi",
+      });
+    }
+
+    console.log("Joriy o‘qituvchi:", teacher);
+
+    // Parolni o'zgartirishni taqiqlaymiz
     if (req.body.password) {
       return res.status(400).json({
         status: "error",
-        message: "Bu bo‘limda parolni o‘zgartirish mumkin emas",
+        message: "Parolni o'zgartirish mumkin emas",
       });
     }
 
-    const findTeacher = await teacherModel.findById(id);
-    if (!findTeacher) {
-      return res.status(400).json({
-        status: "error",
-        message: "Bunday teacher topilmadi",
-      });
-    }
-
-    let profileImage = findTeacher.profileImage; // Eski rasmni saqlab qolamiz
-
-    // Agar rasm yuklangan bo'lsa, uni saqlash
+    // Rasm yuklangan bo'lsa, saqlaymiz
     if (req.files && req.files.profileImage) {
       const imageFile = req.files.profileImage;
-      const uploadPath = "public/images";
+      const uploadDir = "public/images";
+
+      console.log("Yangi rasm yuklanmoqda...");
 
       // Agar papka mavjud bo'lmasa, yaratamiz
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      // Fayl nomini yaratish
-      const fileName = `${Date.now()}_${imageFile.name}`;
-      const filePath = path.join(uploadPath, fileName);
+      // Fayl nomi: teacherId_vaqt.png yoki .jpg
+      const fileExt = path.extname(imageFile.name);
+      const fileName = `${id}_${Date.now()}${fileExt}`;
+      const filePath = path.join(uploadDir, fileName);
 
-      // Faylni saqlash
+      // Faylni saqlaymiz
       await imageFile.mv(filePath);
 
-      // Eski rasmni o‘chirish (agar mavjud bo‘lsa)
-      if (
-        findTeacher.profileImage &&
-        fs.existsSync(path.join("public", findTeacher.profileImage))
-      ) {
-        fs.unlinkSync(path.join("public", findTeacher.profileImage));
+      // Eski rasmni o‘chiramiz, agar u default rasm bo‘lmasa
+      if (teacher.profileImage && teacher.profileImage.startsWith("images/")) {
+        const oldImagePath = path.join("public", teacher.profileImage);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
       }
 
-      // Yangi rasm nomini saqlaymiz
-      profileImage = `images/${fileName}`;
+      // Yangi rasmni saqlaymiz
+      updateData.profileImage = `http://localhost:7474/public/images/${fileName}`;
+
+      console.log("Yangi rasm saqlandi:", updateData.profileImage);
     }
 
-    // Ma'lumotlarni yangilash
-    const editedTeacher = await teacherModel.findByIdAndUpdate(
-      id,
-      { $set: { ...req.body, profileImage } },
-      { new: true }
-    );
+    // Foydalanuvchi faqat kerakli maydonlarni o‘zgartirishi mumkin
+    ["firstName", "lastName", "phone"].forEach((field) => {
+      if (req.body[field]) {
+        updateData[field] = req.body[field];
+      }
+    });
 
-    if (!editedTeacher) {
+    console.log("Yangilanishi kerak bo‘lgan maydonlar:", updateData);
+
+    // Agar hech narsa o'zgarmagan bo'lsa, serverga so'rov yuborishning hojati yo'q
+    if (Object.keys(updateData).length === 0) {
       return res.status(400).json({
         status: "error",
-        message: "Teacher ma'lumotlarini o‘zgartirishda xatolik yuz berdi",
+        message: "O'zgarish yo'q, yangilash uchun ma'lumot yuboring",
       });
     }
+
+    // Ma'lumotlarni yangilaymiz
+    const updatedTeacher = await teacherModel.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+      }
+    );
+
+    console.log("Yangilangan teacher:", updatedTeacher);
 
     res.status(200).json({
       status: "success",
-      message: "Teacher muvaffaqiyatli o‘zgartirildi",
-      data: editedTeacher,
+      message: "O'qituvchi muvaffaqiyatli yangilandi",
+      data: updatedTeacher,
     });
   } catch (error) {
+    console.error("Xatolik:", error);
     res.status(500).json({ status: "error", message: error.message });
   }
 });

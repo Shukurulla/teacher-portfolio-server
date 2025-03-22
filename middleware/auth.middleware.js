@@ -9,7 +9,6 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    // JWT tokenni tekshiramiz (agar JWT bo'lsa)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userData = decoded;
     next();

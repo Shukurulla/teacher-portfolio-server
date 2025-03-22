@@ -22,6 +22,10 @@ const fileSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      job: {
+        type: Object,
+        required: true,
+      },
     },
     achievments: {
       id: {

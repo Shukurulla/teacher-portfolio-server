@@ -7,6 +7,7 @@ import fileModel from "../models/files.model.js"; // Modelni import qilish
 import teacherModel from "../models/teachers.model.js";
 import AchievmentsModel from "../models/achievments.model.js";
 import authMiddleware from "../middleware/auth.middleware.js";
+import jobModel from "../models/job.model.js";
 
 const router = express.Router();
 
@@ -14,13 +15,9 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fayllarni yuklash uchun middleware
-router.use(fileUpload());
-
 // Fayllarni yuklash va saqlash routeri
 router.post("/file/upload", async (req, res) => {
   try {
-    console.log(req.body);
     // Fayl va title mavjudligini tekshirish
     if (!req.files || !req.files.file || !req.body.title) {
       return res.status(400).json({
@@ -46,6 +43,13 @@ router.post("/file/upload", async (req, res) => {
       return res
         .status(400)
         .json({ status: "error", message: "Bunday yutuq topilmadi" });
+    }
+
+    const findJob = await jobModel.findById(req.body.job);
+    if (!findJob) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Bunday kasb topilmadi" });
     }
 
     // Faylni saqlash manzilini tayyorlash
@@ -82,6 +86,7 @@ router.post("/file/upload", async (req, res) => {
           id: req.body.teacherId, // `from.id` ma'lumoti (tashqi ma'lumot)
           firstName: findTeacher.firstName,
           lastName: findTeacher.lastName,
+          job: findJob,
         },
         achievments: {
           title: findAchievment.title,
@@ -124,14 +129,23 @@ router.get("/new-files", async (req, res) => {
 router.get("/file/my-files/", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.userData;
+
+    // Foydalanuvchiga tegishli barcha fayllarni olish
     const myFiles = await fileModel.find({ "from.id": userId });
-    res.status(200).json({ status: "success", data: myFiles });
+
+    // totalBalls hisoblash
+    const totalBalls = myFiles.reduce((sum, file) => {
+      return sum + (file.achievments?.rating?.rating || 0);
+    }, 0);
+
+    res.status(200).json({ status: "success", data: { myFiles, totalBalls } });
   } catch (error) {
     res
       .status(error.status || 500)
       .json({ status: "error", message: error.message });
   }
 });
+
 router.delete("/file/delete/:id", async (req, res) => {
   try {
     const file = await fileModel.findByIdAndDelete(req.params.id);

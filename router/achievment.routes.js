@@ -4,11 +4,13 @@ import AchievmentsModel from "../models/achievments.model.js";
 import fileModel from "../models/files.model.js";
 
 const router = express.Router();
-router.get("/achievments", authMiddleware, async (req, res) => {
+
+router.get("/achievments/:id", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.userData;
+    const { id } = req.params; // Job ID
 
-    // Barcha achievmentlarni olish
+    // Barcha achievementlarni olish
     const achievments = await AchievmentsModel.find();
 
     // Foydalanuvchiga tegishli fayllarni olish
@@ -25,11 +27,13 @@ router.get("/achievments", authMiddleware, async (req, res) => {
         achievments: achievments
           .filter((achievment) => achievment.section === section)
           .map((achievment) => {
-            // Foydalanuvchi fayllarida achievment bor-yo‘qligini tekshirish
-            const isExist = files.some(
-              (file) =>
-                file.achievments.id.toString() === achievment._id.toString()
-            );
+            const isExist = files.some((file) => {
+              return (
+                file.from.job && // file.from.job mavjud bo‘lishi kerak
+                file.from.job._id.toString() === id && // Job ID mos kelishi kerak
+                file.achievments.id.toString() === achievment._id.toString() // Yutuq mos kelishi kerak
+              );
+            });
 
             return {
               exist: isExist,
