@@ -1,5 +1,4 @@
 import express from "express";
-import fileUpload from "express-fileupload";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -176,6 +175,48 @@ router.post("/file/accept/:id", async (req, res) => {
     res.json({ data: acceptFile, status: "success" });
   } catch (error) {
     res.json({ status: "error", message: error.message });
+  }
+});
+
+router.get("/files/", async (req, res) => {
+  try {
+    const files = await fileModel.find().sort({ status: 1, createdAt: -1 });
+    res.json(files);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.patch("/files/:id", async (req, res) => {
+  try {
+    const { status, resultMessage } = req.body;
+    const updatedFile = await fileModel.findByIdAndUpdate(
+      req.params.id,
+      { status, resultMessage },
+      { new: true }
+    );
+    res.json(updatedFile);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+router.get("/preview/:id", async (req, res) => {
+  try {
+    const file = await fileModel.findById(req.params.id);
+    if (!file) return res.status(404).json({ message: "File not found" });
+
+    // In a real implementation, you might want to:
+    // 1. Check file type
+    // 2. Process the file (e.g., convert to PDF for preview)
+    // 3. Return appropriate content
+
+    res.json({
+      url: file.fileUrl,
+      type: file.fileName?.split(".").pop() || "file",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -2,6 +2,7 @@ import express from "express";
 import adminModel from "../models/admin.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ router.post("/admin/login", async (req, res) => {
     if (!findAdmin) {
       return res.status(400).json({
         status: "error",
-        message: "Bunday username oldin roy'hatdan otmagan",
+        message: "Username yoki parol mos kelmadi",
       });
     }
 
@@ -62,6 +63,21 @@ router.post("/admin/login", async (req, res) => {
     res
       .status(200)
       .json({ status: "success", data: { admin: findAdmin, token } });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
+
+router.get("/admin/profile", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.userData;
+    const findAdmin = await adminModel.findById(userId);
+    if (!findAdmin) {
+      return res
+        .status(401)
+        .json({ status: "Error", message: "Bunday admin topilmadi" });
+    }
+    res.status(200).json({ status: "success", data: findAdmin });
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }

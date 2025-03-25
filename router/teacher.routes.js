@@ -6,6 +6,9 @@ import authMiddleware from "../middleware/auth.middleware.js";
 import fileUpload from "express-fileupload";
 import fs from "fs";
 import path from "path";
+import jobModel from "../models/job.model.js";
+import AchievmentsModel from "../models/achievments.model.js";
+import fileModel from "../models/files.model.js";
 
 const router = express.Router();
 
@@ -112,22 +115,22 @@ router.get("/teacher/all", async (req, res) => {
   }
 });
 
-router.get("/teacher/:id", authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const findTeacher = await teacherModel.findById(id);
-    if (!findTeacher) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Bunday teacher topilmadi" });
-    }
-    res.status(200).json({ status: "success", data: findTeacher });
-  } catch (error) {
-    res
-      .status(error.status || 500)
-      .json({ status: "error", message: error.message });
-  }
-});
+// router.get("/teacher/:id", authMiddleware, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const findTeacher = await teacherModel.findById(id);
+//     if (!findTeacher) {
+//       return res
+//         .status(400)
+//         .json({ status: "error", message: "Bunday teacher topilmadi" });
+//     }
+//     res.status(200).json({ status: "success", data: findTeacher });
+//   } catch (error) {
+//     res
+//       .status(error.status || 500)
+//       .json({ status: "error", message: error.message });
+//   }
+// });
 
 router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
   try {
@@ -251,6 +254,80 @@ router.delete("/teacher/delete/:id", authMiddleware, async (req, res) => {
     res
       .status(error.status || 500)
       .json({ status: "error", message: error.message });
+  }
+});
+
+router.get("/teachers", async (req, res) => {
+  try {
+    // 1. O'qituvchilarni olish (parolni chiqarish yo‘q)
+    const teachers = await teacherModel.find({}, "-password").lean();
+
+    // 2. Barcha ish joylarini olish
+    const jobs = await jobModel.find().lean();
+
+    // 3. Barcha yutuqlarni olish
+    const achievements = await fileModel.find().lean();
+
+    // 4. Har bir o'qituvchini jobs va achievements bilan bog'lash
+    const result = teachers.map((teacher) => {
+      // Ish joylarini ajratish
+      const teacherJobs = jobs.filter(
+        (job) => job.teacher.toString() === teacher._id.toString()
+      );
+
+      // Yutuqlarni ajratish
+      const teacherAchievements = achievements.filter(
+        (ach) => ach.from.id.toString() === teacher._id.toString()
+      );
+
+      return {
+        ...teacher,
+        jobs: teacherJobs,
+        jobsCount: teacherJobs.length,
+        achievementsCount: teacherAchievements.length,
+        totalPoints: teacherAchievements.reduce(
+          (sum, ach) => sum + (ach.achievments.rating.rating || 0),
+          0
+        ),
+      };
+    });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/teacher/:id", async (req, res) => {
+  try {
+    const teacher = await teacherModel
+      .findById(req.params.id)
+      .select("-password");
+    if (!teacher)
+      return res.status(404).json({ message: "O'qituvchi topilmadi" });
+    res.json(teacher);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/teacher/:teacherId/jobs", async (req, res) => {
+  try {
+    const jobs = await jobModel.find({ teacher: req.params.teacherId });
+    res.json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get("/teacher/:teacherId/achievements", async (req, res) => {
+  try {
+    const achievements = await fileModel.find({
+      "from.id": req.params.teacherId,
+    });
+    res.json(achievements);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
