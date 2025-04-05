@@ -115,7 +115,8 @@ router.post("/file/upload", authMiddleware, async (req, res) => {
 
     const browser = await puppeteer.launch({
       headless: "new",
-      executablePath: "/usr/bin/chromium-browser",
+      executablePath: "/snap/bin/chromium",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "load" });
