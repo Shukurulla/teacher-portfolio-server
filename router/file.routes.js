@@ -113,7 +113,10 @@ router.post("/file/upload", authMiddleware, async (req, res) => {
     const pdfFileName = `${baseFileName}.pdf`;
     const pdfPath = path.join(uploadDir, pdfFileName);
 
-    const browser = await puppeteer.launch({ headless: "new" });
+    const browser = await puppeteer.launch({
+      headless: "new",
+      executablePath: "/usr/bin/chromium-browser",
+    });
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "load" });
     await page.pdf({ path: pdfPath, format: "A4" });
