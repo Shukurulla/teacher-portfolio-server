@@ -9,6 +9,7 @@ import AchievmentRouter from "./router/achievment.routes.js";
 import JobRouter from "./router/job.routes.js";
 import fileUpload from "express-fileupload";
 import AdminRouter from "./router/admin.routes.js";
+import fileModel from "./models/files.model.js";
 
 dotenv.config();
 const app = express();
@@ -33,6 +34,15 @@ app.get("/files/:filename", (req, res) => {
 
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log("Database connected");
+  // (async (req, res) => {
+  //   try {
+  //     const files = await fileModel.find();
+  //     for (let i = 0; i < files.length; i++) {
+  //       await fileModel.findByIdAndDelete(files[i]._id);
+  //     }
+  //     console.log("clear");
+  //   } catch (error) {}
+  // })();
 });
 
 app.use(TeacherRouter);

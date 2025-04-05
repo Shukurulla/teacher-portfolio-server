@@ -2,22 +2,20 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import fileModel from "../models/files.model.js"; // Modelni import qilish
+import puppeteer from "puppeteer";
+import mammoth from "mammoth";
+import fileModel from "../models/files.model.js";
 import teacherModel from "../models/teachers.model.js";
 import AchievmentsModel from "../models/achievments.model.js";
-import authMiddleware from "../middleware/auth.middleware.js";
 import jobModel from "../models/job.model.js";
+import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
-
-// Faylning direktoriyasini olish (__dirname ni es modulda yaratish)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Fayllarni yuklash va saqlash routeri
-router.post("/file/upload", async (req, res) => {
+router.post("/file/upload", authMiddleware, async (req, res) => {
   try {
-    // Fayl va title mavjudligini tekshirish
     if (!req.files || !req.files.file || !req.body.title) {
       return res.status(400).json({
         status: "error",
@@ -25,64 +23,50 @@ router.post("/file/upload", async (req, res) => {
       });
     }
 
-    const file = req.files.file; // Yuklangan fayl
-    const title = req.body.title; // Title
-
-    const findTeacher = await teacherModel.findById(req.body.teacherId);
-    if (!findTeacher) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Bunday teacher topilmadi" });
-    }
-
-    const findAchievment = await AchievmentsModel.findById(
-      req.body.achievmentId
-    );
-    if (!findAchievment) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Bunday yutuq topilmadi" });
-    }
-
-    const findJob = await jobModel.findById(req.body.job);
-    if (!findJob) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Bunday kasb topilmadi" });
-    }
-
-    // Faylni saqlash manzilini tayyorlash
+    const file = req.files.file;
+    const title = req.body.title;
+    const ext = path.extname(file.name).toLowerCase();
+    const baseFileName = `${Date.now()}`;
     const uploadDir = path.join(__dirname, "../public/files");
+
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    // Fayl kengaytmasini olish (masalan .docx, .jpg)
-    const fileExtension = path.extname(file.name);
+    const uploadedPath = path.join(uploadDir, `${baseFileName}${ext}`);
+    await file.mv(uploadedPath); // Faylni saqlaymiz
 
-    // Fayl nomini yaratish: hozirgi vaqt + kengaytma
-    const fileName = `${Date.now()}${fileExtension}`;
-    const filePath = path.join(uploadDir, fileName);
+    // Excel faylni bloklaymiz (xlsx, xls)
+    if ([".xlsx", ".xls"].includes(ext)) {
+      return res.status(400).json({
+        status: "error",
+        message: "Excel fayllar hozircha qo‘llab-quvvatlanmaydi",
+      });
+    }
 
-    // Faylni saqlash
-    file.mv(filePath, async (err) => {
-      if (err) {
-        return res.status(500).json({
-          status: "error",
-          message: "Faylni saqlashda xatolik yuz berdi!",
-        });
-      }
+    // O'qituvchi va yutuqni tekshiramiz
+    const [findTeacher, findAchievment, findJob] = await Promise.all([
+      teacherModel.findById(req.body.teacherId),
+      AchievmentsModel.findById(req.body.achievmentId),
+      jobModel.findById(req.body.job),
+    ]);
 
-      // Fayl URL manzilini yaratish
-      const fileUrl = `/files/${fileName}`;
+    if (!findTeacher || !findAchievment || !findJob) {
+      return res.status(400).json({
+        status: "error",
+        message: "O'qituvchi, yutuq yoki kasb topilmadi",
+      });
+    }
 
-      // Ma'lumotni bazaga yozish
+    // PDF fayl bo‘lsa, faqat yozib chiqamiz, boshqa convert qilinmaydi
+    if (ext === ".pdf") {
+      const fileUrl = `/files/${baseFileName}.pdf`;
       const newFile = new fileModel({
         fileUrl,
         title,
-        fileName, // MongoDB modeliga fileName ni qo‘shamiz
+        fileName: `${baseFileName}.pdf`,
         from: {
-          id: req.body.teacherId, // `from.id` ma'lumoti (tashqi ma'lumot)
+          id: req.body.teacherId,
           firstName: findTeacher.firstName,
           lastName: findTeacher.lastName,
           job: findJob,
@@ -99,14 +83,73 @@ router.post("/file/upload", async (req, res) => {
       });
 
       await newFile.save();
-
-      res.status(201).json({
+      return res.status(201).json({
         status: "success",
-        message: "Fayl muvaffaqiyatli yuklandi va saqlandi!",
+        message: "PDF fayl muvaffaqiyatli saqlandi!",
         data: newFile,
       });
+    }
+
+    // HTML tarkibini tayyorlaymiz
+    let htmlContent = "";
+
+    if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
+      const fileUrl = `/files/${baseFileName}${ext}`;
+      htmlContent = `<html><body style="margin:0"><img src="http://localhost:7474${fileUrl}" style="max-width:100%"/></body></html>`;
+    } else if (ext === ".docx") {
+      const result = await mammoth.convertToHtml({ path: uploadedPath });
+      htmlContent = `<html><body>${result.value}</body></html>`;
+    } else if (ext === ".txt") {
+      const text = fs.readFileSync(uploadedPath, "utf8");
+      htmlContent = `<html><body><pre>${text}</pre></body></html>`;
+    } else {
+      return res.status(400).json({
+        status: "error",
+        message: "Ushbu turdagi fayl qo‘llab-quvvatlanmaydi",
+      });
+    }
+
+    // HTMLdan PDF yasaymiz
+    const pdfFileName = `${baseFileName}.pdf`;
+    const pdfPath = path.join(uploadDir, pdfFileName);
+
+    const browser = await puppeteer.launch({ headless: "new" });
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "load" });
+    await page.pdf({ path: pdfPath, format: "A4" });
+    await browser.close();
+
+    const fileUrl = `/files/${pdfFileName}`;
+    const newFile = new fileModel({
+      fileUrl,
+      title,
+      fileName: pdfFileName,
+      from: {
+        id: req.body.teacherId,
+        firstName: findTeacher.firstName,
+        lastName: findTeacher.lastName,
+        job: findJob,
+      },
+      achievments: {
+        title: findAchievment.title,
+        section: findAchievment.section,
+        rating: {
+          ratingTitle: req.body.ratingTitle,
+          rating: req.body.rating,
+        },
+        id: req.body.achievmentId,
+      },
+    });
+
+    await newFile.save();
+
+    res.status(201).json({
+      status: "success",
+      message: "Fayl PDFga aylantirildi va saqlandi!",
+      data: newFile,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({
       status: "error",
       message: error.message,
@@ -153,6 +196,15 @@ router.delete("/file/delete/:id", async (req, res) => {
     res
       .status(error.status || 500)
       .json({ status: "error", message: error.message });
+  }
+});
+
+router.get("/file/:id", async (req, res) => {
+  try {
+    const findFile = await fileModel.findById(req.params.id);
+    res.json({ data: findFile });
+  } catch (error) {
+    res.json({ message: error.message });
   }
 });
 
@@ -219,5 +271,20 @@ router.get("/preview/:id", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
+router.delete("/file/:id", authMiddleware, async (req, res) => {
+  try {
+    const findFile = await fileModel.findById(req.params.id);
+    if (!findFile) {
+      return res
+        .status(401)
+        .json({ status: "error", message: "Bunday yutuq topilmadi" });
+    }
+    await fileModel.findByIdAndDelete(req.params.id);
+    res
+      .status(200)
+      .json({ status: "success", message: "Yutuq muaffaqiyatli ochirildi" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+});
 export default router;

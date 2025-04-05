@@ -219,8 +219,6 @@ router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
       }
     );
 
-    console.log("Yangilangan teacher:", updatedTeacher);
-
     res.status(200).json({
       status: "success",
       message: "O'qituvchi muvaffaqiyatli yangilandi",
