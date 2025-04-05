@@ -188,7 +188,7 @@ router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
       }
 
       // Yangi rasmni saqlaymiz
-      updateData.profileImage = `http://localhost:7474/public/images/${fileName}`;
+      updateData.profileImage = `https://server.portfolio-sport.uz/public/images/${fileName}`;
 
       console.log("Yangi rasm saqlandi:", updateData.profileImage);
     }

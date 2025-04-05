@@ -95,7 +95,7 @@ router.post("/file/upload", authMiddleware, async (req, res) => {
 
     if ([".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext)) {
       const fileUrl = `/files/${baseFileName}${ext}`;
-      htmlContent = `<html><body style="margin:0"><img src="http://localhost:7474${fileUrl}" style="max-width:100%"/></body></html>`;
+      htmlContent = `<html><body style="margin:0"><img src="https://server.portfolio-sport.uz${fileUrl}" style="max-width:100%"/></body></html>`;
     } else if (ext === ".docx") {
       const result = await mammoth.convertToHtml({ path: uploadedPath });
       htmlContent = `<html><body>${result.value}</body></html>`;
@@ -149,7 +149,6 @@ router.post("/file/upload", authMiddleware, async (req, res) => {
       data: newFile,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({
       status: "error",
       message: error.message,
