@@ -17,7 +17,6 @@ const __dirname = path.dirname(__filename);
 // Fayllarni yuklash va saqlash routeri
 router.post("/file/upload", async (req, res) => {
   try {
-    // Fayl va title mavjudligini tekshirish
     if (!req.files || !req.files.file || !req.body.title) {
       return res.status(400).json({
         status: "error",
@@ -25,8 +24,8 @@ router.post("/file/upload", async (req, res) => {
       });
     }
 
-    const file = req.files.file; // Yuklangan fayl
-    const title = req.body.title; // Title
+    const file = req.files.file;
+    const title = req.body.title;
 
     const findTeacher = await teacherModel.findById(req.body.teacherId);
     if (!findTeacher) {
@@ -51,20 +50,31 @@ router.post("/file/upload", async (req, res) => {
         .json({ status: "error", message: "Bunday kasb topilmadi" });
     }
 
-    // Faylni saqlash manzilini tayyorlash
+    // Eski tasdiqlanmagan faylni tekshirish va o‘chirish
+    const oldFile = await fileModel.findOne({
+      "from.id": req.body.teacherId,
+      "achievments.id": req.body.achievmentId,
+      status: "Tasdiqlanmadi",
+    });
+
+    if (oldFile) {
+      const oldFilePath = path.join(__dirname, "../public", oldFile.fileUrl);
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath); // faylni fayl tizimidan o‘chirish
+      }
+      await fileModel.findByIdAndDelete(oldFile._id); // bazadan o‘chirish
+    }
+
+    // Faylni saqlash
     const uploadDir = path.join(__dirname, "../public/files");
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    // Fayl kengaytmasini olish (masalan .docx, .jpg)
     const fileExtension = path.extname(file.name);
-
-    // Fayl nomini yaratish: hozirgi vaqt + kengaytma
     const fileName = `${Date.now()}${fileExtension}`;
     const filePath = path.join(uploadDir, fileName);
 
-    // Faylni saqlash
     file.mv(filePath, async (err) => {
       if (err) {
         return res.status(500).json({
@@ -73,16 +83,14 @@ router.post("/file/upload", async (req, res) => {
         });
       }
 
-      // Fayl URL manzilini yaratish
       const fileUrl = `/files/${fileName}`;
 
-      // Ma'lumotni bazaga yozish
       const newFile = new fileModel({
         fileUrl,
         title,
-        fileName, // MongoDB modeliga fileName ni qo‘shamiz
+        fileName,
         from: {
-          id: req.body.teacherId, // `from.id` ma'lumoti (tashqi ma'lumot)
+          id: req.body.teacherId,
           firstName: findTeacher.firstName,
           lastName: findTeacher.lastName,
           job: findJob,
@@ -107,6 +115,7 @@ router.post("/file/upload", async (req, res) => {
       });
     });
   } catch (error) {
+    console.error("Upload Error:", error);
     res.status(500).json({
       status: "error",
       message: error.message,
