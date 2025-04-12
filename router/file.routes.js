@@ -187,6 +187,14 @@ router.get("/files/", async (req, res) => {
   }
 });
 
+router.get("/file/:id", async (req, res) => {
+  try {
+    const findFile = await fileModel.findById(req.params.id);
+    res.json({ data: findFile });
+  } catch (error) {
+    res.json({ message: error.message });
+  }
+});
 router.patch("/files/:id", async (req, res) => {
   try {
     const { status, resultMessage } = req.body;
@@ -198,6 +206,22 @@ router.patch("/files/:id", async (req, res) => {
     res.json(updatedFile);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+router.delete("/file/:id", authMiddleware, async (req, res) => {
+  try {
+    const findFile = await fileModel.findById(req.params.id);
+    if (!findFile) {
+      return res
+        .status(401)
+        .json({ status: "error", message: "Bunday yutuq topilmadi" });
+    }
+    await fileModel.findByIdAndDelete(req.params.id);
+    res
+      .status(200)
+      .json({ status: "success", message: "Yutuq muaffaqiyatli ochirildi" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
