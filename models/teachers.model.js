@@ -23,6 +23,10 @@ const teacherSchema = new mongoose.Schema(
       default:
         "https://as2.ftcdn.net/jpg/05/89/93/27/1000_F_589932782_vQAEAZhHnq1QCGu5ikwrYaQD0Mmurm0N.jpg",
     },
+    region: {
+      type: Object,
+      required: true,
+    },
   },
   { timestamps: true }
 );

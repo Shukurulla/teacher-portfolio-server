@@ -63,7 +63,7 @@ router.get("/job/:id", authMiddleware, async (req, res) => {
   try {
     const findJobs = await jobModel.findOne({ _id: req.params.id });
     const findFiles = await fileModel.find({
-      "from.job._id": findJobs._id,
+      "from.job": findJobs._id,
     });
 
     res

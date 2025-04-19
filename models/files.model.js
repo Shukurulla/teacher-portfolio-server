@@ -2,16 +2,27 @@ import mongoose from "mongoose";
 
 const fileSchema = new mongoose.Schema(
   {
-    fileUrl: {
-      type: String,
-      required: true,
-    },
+    files: [
+      {
+        fileUrl: {
+          type: String,
+          required: true,
+        },
+        fileTitle: {
+          type: String,
+          required: true,
+        },
+        rating: { type: Number, default: null },
+      },
+    ],
     fileName: {
       type: String,
+      required: true,
     },
     from: {
       id: {
         type: mongoose.Types.ObjectId,
+        ref: "teacher",
         required: true,
       },
       firstName: {
@@ -23,13 +34,15 @@ const fileSchema = new mongoose.Schema(
         required: true,
       },
       job: {
-        type: Object,
+        type: mongoose.Types.ObjectId,
+        ref: "job",
         required: true,
       },
     },
     achievments: {
       id: {
         type: mongoose.Types.ObjectId,
+        ref: "achievment",
         required: true,
       },
       title: {
@@ -40,15 +53,8 @@ const fileSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
-      rating: {
-        ratingTitle: {
-          type: String,
-          required: true,
-        },
-        rating: {
-          type: Number,
-          required: true,
-        },
+      ratings: {
+        type: Object,
       },
     },
     status: {
@@ -58,6 +64,9 @@ const fileSchema = new mongoose.Schema(
     },
     resultMessage: {
       type: String,
+    },
+    inspector: {
+      type: Object,
     },
   },
   { timestamps: true }

@@ -3,42 +3,60 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import teacherModel from "../models/teachers.model.js";
 import authMiddleware from "../middleware/auth.middleware.js";
-import fileUpload from "express-fileupload";
 import fs from "fs";
 import path from "path";
 import jobModel from "../models/job.model.js";
-import AchievmentsModel from "../models/achievments.model.js";
 import fileModel from "../models/files.model.js";
+import { provinces } from "../constants/index.js";
 
 const router = express.Router();
 
+router.get("/teacher/regions", async (req, res) => {
+  try {
+    res.json({ data: provinces, status: "success" });
+  } catch (error) {
+    res.json({ message: error.message, status: "error" });
+  }
+});
+
 router.post("/teacher/create", async (req, res) => {
   try {
-    const { firstName, lastName, phone, password } = req.body;
+    const { firstName, lastName, phone, password, province } = req.body;
+
     const findTeacher = await teacherModel.findOne({ phone: phone });
+
     if (findTeacher) {
       return res.status(400).json({
         status: "error",
         message: "Bu telefon raqam oldin royhatdan otgan",
       });
     }
+
+    const findRegion = provinces.find((c) => c.title == province);
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const teacherSchema = {
       firstName,
       lastName,
       phone,
       password: hashedPassword,
+      region: findRegion,
     };
+
     const teacher = await teacherModel.create(teacherSchema);
+
     if (!teacher) {
       return res.status(400).json({
         status: "error",
         message: "Teacher yaratishda xatolik yuz berdi",
       });
     }
+
     const token = jwt.sign({ userId: teacher._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
+
     res.status(200).json({
       token,
       teacher,
@@ -284,7 +302,7 @@ router.get("/teachers", async (req, res) => {
         jobsCount: teacherJobs.length,
         achievementsCount: teacherAchievements.length,
         totalPoints: teacherAchievements.reduce(
-          (sum, ach) => sum + (ach.achievments.rating.rating || 0),
+          (sum, ach) => sum + (ach.achievments.rating?.rating || 0),
           0
         ),
       };
