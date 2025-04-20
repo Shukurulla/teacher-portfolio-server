@@ -8,7 +8,9 @@ const router = express.Router();
 
 router.post("/admin/sign", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, region } = req.body;
+    console.log(req.body);
+
     const findAdmin = await adminModel.findOne({ username });
     if (findAdmin) {
       return res.status(400).json({
@@ -21,6 +23,7 @@ router.post("/admin/sign", async (req, res) => {
 
     const createAdmin = await adminModel.create({
       username,
+      region,
       password: hashedPassword,
     });
 

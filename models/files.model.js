@@ -38,6 +38,10 @@ const fileSchema = new mongoose.Schema(
         ref: "job",
         required: true,
       },
+      region: {
+        type: Object,
+        required: true,
+      },
     },
     achievments: {
       id: {

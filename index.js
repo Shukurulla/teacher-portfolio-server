@@ -9,8 +9,9 @@ import AchievmentRouter from "./router/achievment.routes.js";
 import JobRouter from "./router/job.routes.js";
 import fileUpload from "express-fileupload";
 import AdminRouter from "./router/admin.routes.js";
-import fileModel from "./models/files.model.js";
+import adminModel from "./models/admin.model.js";
 import teacherModel from "./models/teachers.model.js";
+import fileModel from "./models/files.model.js";
 
 dotenv.config();
 const app = express();

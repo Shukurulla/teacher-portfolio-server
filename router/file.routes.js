@@ -7,6 +7,7 @@ import teacherModel from "../models/teachers.model.js";
 import AchievmentsModel from "../models/achievments.model.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import jobModel from "../models/job.model.js";
+import adminModel from "../models/admin.model.js";
 
 const router = express.Router();
 
@@ -130,6 +131,7 @@ router.post("/file/upload", async (req, res) => {
         firstName: findTeacher.firstName,
         lastName: findTeacher.lastName,
         job: findJob,
+        region: findTeacher.region,
       },
       achievments: {
         title: findAchievment.title,
@@ -199,9 +201,6 @@ router.delete("/file/delete/:id", async (req, res) => {
 
 router.post("/file/accept/:id", async (req, res) => {
   try {
-    // Faylni topis
-    console.log(req.body);
-
     const findFile = await fileModel.findById(req.params.id);
     if (!findFile) {
       return res.status(404).json({
@@ -219,6 +218,25 @@ router.post("/file/accept/:id", async (req, res) => {
     }
 
     const { ratings, resultMessage, inspector } = req.body;
+    const findAdmin = await adminModel.findById(inspector);
+    if (!findAdmin) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Bunday admin topilmadi" });
+    }
+    const findTeacher = await teacherModel.findById(findFile.from.id);
+    if (!findTeacher) {
+      return res.status(400).json({
+        status: "error",
+        message: "Bu yutuqqa tegishli teacher topilmadi",
+      });
+    }
+    if (admin.region.region !== findTeacher.region.region) {
+      return res.status(400).json({
+        status: "error",
+        message: "Siz ushbu regionga tegishli filelarni tekshira olmaysiz",
+      });
+    }
 
     // Barcha fayllar uchun baho belgilanganligini tekshirish
     if (!ratings || ratings.length !== findFile.files.length) {
@@ -242,13 +260,7 @@ router.post("/file/accept/:id", async (req, res) => {
           status: "Tasdiqlandi",
           resultMessage,
           files: updatedFiles, // yangilangan fayllar
-          inspector: {
-            // tekshiruvchi ma'lumotlari
-            id: inspector.id,
-            name: inspector.name,
-            role: inspector.role,
-            date: new Date(),
-          },
+          inspector: { ...findAdmin, date: new Date() },
         },
       },
       { new: true } // yangilangan versiyasini qaytarish
@@ -287,18 +299,17 @@ router.get("/file/:id", async (req, res) => {
 router.patch("/files/:id", async (req, res) => {
   try {
     const { status, resultMessage, files, inspector } = req.body;
-
+    const findAdmin = await adminModel.findById(inspector);
+    if (!findAdmin) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Bunday admin topilmadi" });
+    }
     // Yangilanish uchun ma'lumotlar
     const updateData = {
       status,
       resultMessage,
-      inspector: {
-        // tekshiruvchi ma'lumotlari
-        id: inspector.id,
-        name: inspector.name,
-        role: inspector.role,
-        date: new Date(),
-      },
+      inspector: { ...findAdmin, date: new Date() },
     };
 
     // Agar fayllar yangilansa

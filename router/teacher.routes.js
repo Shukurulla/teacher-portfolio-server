@@ -19,6 +19,22 @@ router.get("/teacher/regions", async (req, res) => {
   }
 });
 
+router.get("/teacher/sorted-regions", authMiddleware, async (req, res) => {
+  try {
+    const teachers = await teacherModel.find();
+    const regions = ["Toshkent", "Nukus", "Samarqand", "Fargʻona"];
+    const sortedTeacher = regions.map((item) => {
+      return {
+        region: item,
+        teachers: teachers.filter((c) => c.region.region == item),
+      };
+    });
+    res.json(sortedTeacher);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
 router.post("/teacher/create", async (req, res) => {
   try {
     const { firstName, lastName, phone, password, province } = req.body;
@@ -32,8 +48,6 @@ router.post("/teacher/create", async (req, res) => {
       });
     }
 
-    const findRegion = provinces.find((c) => c.title == province);
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const teacherSchema = {
@@ -41,7 +55,7 @@ router.post("/teacher/create", async (req, res) => {
       lastName,
       phone,
       password: hashedPassword,
-      region: findRegion,
+      region: province,
     };
 
     const teacher = await teacherModel.create(teacherSchema);
