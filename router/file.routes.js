@@ -130,7 +130,7 @@ router.post("/file/upload", async (req, res) => {
         id: req.body.teacherId,
         firstName: findTeacher.firstName,
         lastName: findTeacher.lastName,
-        job: findJob,
+        job: findJob._id,
         region: findTeacher.region,
       },
       achievments: {
