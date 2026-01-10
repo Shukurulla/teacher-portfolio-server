@@ -16,7 +16,16 @@ import fileModel from "./models/files.model.js";
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: "*" }));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://www.portfolio-sport.uz",
+      "https://admin.portfolio-sport.uz",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
