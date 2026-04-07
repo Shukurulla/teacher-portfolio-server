@@ -9,6 +9,7 @@ import AchievmentRouter from "./router/achievment.routes.js";
 import JobRouter from "./router/job.routes.js";
 import fileUpload from "express-fileupload";
 import AdminRouter from "./router/admin.routes.js";
+import logger from "./middleware/logger.middleware.js";
 import adminModel from "./models/admin.model.js";
 import teacherModel from "./models/teachers.model.js";
 import fileModel from "./models/files.model.js";
@@ -35,6 +36,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(fileUpload());
 app.use("/public", express.static("public"));
+app.use(logger);
 
 // 📌 `files` ichidagi fayllarni token bilan olish
 app.get("/files/:filename", (req, res) => {
