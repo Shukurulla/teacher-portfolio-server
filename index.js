@@ -21,6 +21,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://portfolio-sport.uz",
       "https://www.portfolio-sport.uz",
       "https://admin.portfolio-sport.uz",
     ],
