@@ -231,7 +231,7 @@ router.post("/file/accept/:id", async (req, res) => {
         message: "Bu yutuqqa tegishli teacher topilmadi",
       });
     }
-    if (admin.region.region !== findTeacher.region.region) {
+    if (findAdmin.region.region !== findTeacher.region.region) {
       return res.status(400).json({
         status: "error",
         message: "Siz ushbu regionga tegishli filelarni tekshira olmaysiz",
