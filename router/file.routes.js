@@ -231,12 +231,6 @@ router.post("/file/accept/:id", async (req, res) => {
         message: "Bu yutuqqa tegishli teacher topilmadi",
       });
     }
-    if (findAdmin.region.region !== findTeacher.region.region) {
-      return res.status(400).json({
-        status: "error",
-        message: "Siz ushbu regionga tegishli filelarni tekshira olmaysiz",
-      });
-    }
 
     // Barcha fayllar uchun baho belgilanganligini tekshirish
     if (!ratings || ratings.length !== findFile.files.length) {
