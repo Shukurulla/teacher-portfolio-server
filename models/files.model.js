@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 
+const fileRatingSchema = new mongoose.Schema(
+  {
+    about: { type: String },
+    rating: { type: Number },
+  },
+  { _id: false }
+);
+
 const fileSchema = new mongoose.Schema(
   {
     files: [
@@ -12,7 +20,7 @@ const fileSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
-        rating: { type: Number, default: null },
+        rating: { type: fileRatingSchema, default: null },
       },
     ],
     fileName: {

@@ -46,7 +46,6 @@ router.post("/file/upload", async (req, res) => {
       : [req.files.files];
 
     const title = req.body.title;
-    const ratings = JSON.parse(req.body.ratings || "[]");
 
     // O'qituvchini tekshirish
     const findTeacher = await teacherModel.findById(req.body.teacherId);
@@ -117,8 +116,9 @@ router.post("/file/upload", async (req, res) => {
       // Fayl ma'lumotlarini saqlash
       processedFiles.push({
         fileUrl: `/files/${fileName}`,
-        fileTitle: `${title} - ${ratings[i]?.about || `Fayl ${i + 1}`}`,
-        // rating bu yerda belgilanmaydi, keyin tasdiqlashda belgilanadi
+        fileTitle:
+          uploadedFiles.length > 1 ? `${title} (${i + 1})` : title,
+        // toifa (ball) admin tasdiqlashda belgilanadi
       });
     }
 
@@ -175,9 +175,10 @@ router.get("/file/my-files/", authMiddleware, async (req, res) => {
     // Foydalanuvchiga tegishli barcha fayllarni olish
     const myFiles = await fileModel.find({ "from.id": userId });
 
-    // totalBalls hisoblash
+    // totalBalls hisoblash (faqat tasdiqlangan hujjatlarning balli)
     const totalBalls = myFiles.reduce((sum, file) => {
-      return sum + (file.achievments?.rating?.rating || 0);
+      if (file.status !== "Tasdiqlandi") return sum;
+      return sum + file.files.reduce((s, f) => s + (f.rating?.rating || 0), 0);
     }, 0);
 
     res.status(200).json({ status: "success", data: { myFiles, totalBalls } });
@@ -232,19 +233,28 @@ router.post("/file/accept/:id", async (req, res) => {
       });
     }
 
-    // Barcha fayllar uchun baho belgilanganligini tekshirish
-    if (!ratings || ratings.length !== findFile.files.length) {
+    // Barcha fayllar uchun toifa belgilanganligini tekshirish
+    if (!Array.isArray(ratings) || ratings.length !== findFile.files.length) {
       return res.status(400).json({
         status: "error",
-        message: "Iltimos, barcha fayllar uchun baho belgilang",
+        message: "Iltimos, har bir hujjat uchun toifani tanlang",
       });
     }
 
-    // Fayllarni yangi ratinglar bilan yangilash
-    const updatedFiles = findFile.files.map((file, index) => ({
-      ...file,
-      rating: ratings[index], // har bir fayl uchun alohida baho
-    }));
+    // Fayllarni admin tanlagan toifa (ball) bilan yangilash
+    const updatedFiles = findFile.files.map((file, index) => {
+      const plain = file.toObject();
+      const selected = ratings[index];
+      return {
+        ...plain,
+        rating: selected
+          ? { about: selected.about, rating: selected.rating }
+          : null,
+        fileTitle: selected?.about
+          ? `${findFile.fileName} - ${selected.about}`
+          : plain.fileTitle,
+      };
+    });
 
     // Faylni yangilash
     const acceptFile = await fileModel.findByIdAndUpdate(
@@ -310,8 +320,8 @@ router.patch("/files/:id", async (req, res) => {
     if (files) {
       updateData.files = files.map((file) => ({
         ...file,
-        // ratingni saqlab qolish yoki yangilash
-        rating: file.rating || 0,
+        // ratingni saqlab qolish (toifa obyekti yoki null)
+        rating: file.rating || null,
       }));
     }
 

@@ -315,10 +315,13 @@ router.get("/teachers", async (req, res) => {
         jobs: teacherJobs,
         jobsCount: teacherJobs.length,
         achievementsCount: teacherAchievements.length,
-        totalPoints: teacherAchievements.reduce(
-          (sum, ach) => sum + (ach.achievments.rating?.rating || 0),
-          0
-        ),
+        totalPoints: teacherAchievements.reduce((sum, ach) => {
+          if (ach.status !== "Tasdiqlandi") return sum;
+          return (
+            sum +
+            (ach.files?.reduce((s, f) => s + (f.rating?.rating || 0), 0) || 0)
+          );
+        }, 0),
       };
     });
 
