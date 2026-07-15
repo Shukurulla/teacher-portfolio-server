@@ -9,6 +9,8 @@ import AchievmentRouter from "./router/achievment.routes.js";
 import JobRouter from "./router/job.routes.js";
 import fileUpload from "express-fileupload";
 import AdminRouter from "./router/admin.routes.js";
+import SpecialRouter from "./router/special.routes.js";
+import MalakaRouter from "./router/malaka.routes.js";
 import logger from "./middleware/logger.middleware.js";
 import adminModel from "./models/admin.model.js";
 import teacherModel from "./models/teachers.model.js";
@@ -75,6 +77,8 @@ app.use(FileRouter);
 app.use(AchievmentRouter);
 app.use(JobRouter);
 app.use(AdminRouter);
+app.use(SpecialRouter);
+app.use(MalakaRouter);
 
 app.get("/", async (req, res) => {
   try {

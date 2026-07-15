@@ -92,3 +92,26 @@ export const getFilialKey = (region) => {
 
 export const getFilialByKey = (key) =>
   FILIALS.find((f) => f.key === key) || null;
+
+// VM 2022-07-04/355-son qarori 3-ilova NIZOM 19-band — maxsus yutuqlar (18 ta).
+// Ulardan biriga (tasdiqlangan) ega bo'lgan tinglovchi muqobil malaka oshirishga o'tadi.
+export const SPECIAL_ITEMS = [
+  "“O‘zbekiston Respublikasida xizmat ko‘rsatgan sport ustozi” faxriy unvoni",
+  "“O‘zbekiston Respublikasida xizmat ko‘rsatgan yoshlar murabbiysi” faxriy unvoni",
+  "“O‘zbekiston Respublikasi xalq o‘qituvchisi” faxriy unvoni",
+  "“O‘zbekiston iftixori” faxriy unvoni",
+  "“O‘zbekiston Respublikasida xizmat ko‘rsatgan sportchi” faxriy unvoni",
+  "So‘nggi 4 yilda Olimpiya va Paralimpiya o‘yinlarida g‘olib va sovrindor bo‘lgan sportchilar va ularni tayyorlagan trenerlar",
+  "O‘zbekiston Fanlar akademiyasi akademigi ilmiy unvoni",
+  "So‘nggi 4 yilda falsafa doktori (PhD) yoki fan doktori (DSc) darajasi uchun dissertatsiya himoya qilish",
+  "So‘nggi 4 yilda DSc dissertatsiyasiga ilmiy maslahatchi yoki 2 ta PhD dissertatsiyasiga ilmiy rahbarlik qilish",
+  "So‘nggi 2 yilda dotsent yoki professor ilmiy unvoni olganligi",
+  "So‘nggi 4 yilda xorijda malaka oshirish/stajirovka o‘tashi (malaka oshirish ≥1 oy, stajirovka ≥3 oy)",
+  "So‘nggi 2 yilda yakka mualliflikda jismoniy tarbiya va sport bo‘yicha darslik yoki o‘quv qo‘llanma nashr etish",
+  "Xalqaro shaxmat federatsiyasi (FIDE) reytingida 1 800 va undan yuqori ball",
+  "“Qoraqalpog‘iston Respublikasida xizmat ko‘rsatgan sport ustozi” faxriy unvoni",
+  "“Qoraqalpog‘iston Respublikasida xizmat ko‘rsatgan yoshlar murabbiysi” faxriy unvoni",
+  "“Qoraqalpog‘iston Respublikasi xalq ta’limi o‘qituvchisi” faxriy unvoni",
+  "“Qoraqalpog‘iston Respublikasida xizmat ko‘rsatgan sportchi” faxriy unvoni",
+  "Tuman(shahar)larning “Eng yaxshi maktab sport klubi” reytingida 1–5-o‘rinni egallagan maktab jismoniy tarbiya o‘qituvchilari",
+];
