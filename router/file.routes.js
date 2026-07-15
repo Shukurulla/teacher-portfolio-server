@@ -166,6 +166,29 @@ router.get("/new-files", adminAuth, async (req, res) => {
     if (req.admin.role !== "superadmin" && req.admin.filial) {
       filter["from.region.region"] = req.admin.filial;
     }
+    if (req.query.search) {
+      const s = String(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const rx = new RegExp(s, "i");
+      filter.$or = [{ "from.firstName": rx }, { "from.lastName": rx }];
+    }
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit) || 10;
+    if (page && page > 0) {
+      const total = await fileModel.countDocuments(filter);
+      const files = await fileModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+      return res.status(200).json({
+        status: "success",
+        data: files,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      });
+    }
     const files = await fileModel.find(filter);
     res.status(200).json({ status: "success", data: files });
   } catch (error) {
@@ -295,6 +318,31 @@ router.get("/files/", adminAuth, async (req, res) => {
     const filter = {};
     if (req.admin.role !== "superadmin" && req.admin.filial) {
       filter["from.region.region"] = req.admin.filial;
+    }
+    if (req.query.status) filter.status = req.query.status;
+    if (req.query.search) {
+      const s = String(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const rx = new RegExp(s, "i");
+      filter.$or = [{ "from.firstName": rx }, { "from.lastName": rx }];
+    }
+
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit) || 10;
+    if (page && page > 0) {
+      const total = await fileModel.countDocuments(filter);
+      const files = await fileModel
+        .find(filter)
+        .sort({ status: 1, createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+      return res.json({
+        status: "success",
+        data: files,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      });
     }
     const files = await fileModel
       .find(filter)
