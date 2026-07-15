@@ -14,6 +14,17 @@ export const achievements = [
   },
 ];
 
+// 4 ta filial. key — teacher.region.region da saqlanadigan qiymat bilan bir xil.
+export const FILIALS = [
+  { key: "Nukus", name: "JTSBMQTMOI Nukus Filiali" },
+  { key: "Fargʻona", name: "JTSBMQTMOI Fargʻona Filiali" },
+  { key: "Samarqand", name: "JTSBMQTMOI Samarqand Filiali" },
+  { key: "Toshkent", name: "JTSBMQTMO Instituti" },
+];
+
+export const FILIAL_KEYS = FILIALS.map((f) => f.key);
+
+// Har bir viloyat qaysi filialga tegishli. region — filial kaliti.
 export const provinces = [
   {
     title: "Toshkent shahri",
@@ -21,6 +32,10 @@ export const provinces = [
   },
   {
     title: "Toshkent viloyati",
+    region: "Toshkent",
+  },
+  {
+    title: "Jizzax viloyati",
     region: "Toshkent",
   },
   {
@@ -60,7 +75,7 @@ export const provinces = [
     region: "Fargʻona",
   },
   {
-    title: "Fargʻona",
+    title: "Andijon viloyati",
     region: "Fargʻona",
   },
   {
@@ -68,3 +83,12 @@ export const provinces = [
     region: "Fargʻona",
   },
 ];
+
+// region — province obyekti ({title, region}) yoki filial kaliti (string) bo'lishi mumkin.
+export const getFilialKey = (region) => {
+  if (!region) return null;
+  return typeof region === "string" ? region : region.region || null;
+};
+
+export const getFilialByKey = (key) =>
+  FILIALS.find((f) => f.key === key) || null;

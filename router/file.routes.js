@@ -6,6 +6,7 @@ import fileModel from "../models/files.model.js"; // Modelni import qilish
 import teacherModel from "../models/teachers.model.js";
 import AchievmentsModel from "../models/achievments.model.js";
 import authMiddleware from "../middleware/auth.middleware.js";
+import { adminAuth } from "../middleware/adminAuth.middleware.js";
 import jobModel from "../models/job.model.js";
 import adminModel from "../models/admin.model.js";
 
@@ -157,9 +158,15 @@ router.post("/file/upload", async (req, res) => {
     });
   }
 });
-router.get("/new-files", async (req, res) => {
+router.get("/new-files", adminAuth, async (req, res) => {
   try {
-    const files = await fileModel.find({ status: "Tekshirilmoqda" });
+    const filter = { status: "Tekshirilmoqda" };
+    // Filial admin faqat o'z filialining hujjatlarini ko'radi.
+    // superadmin va (eski) filialsiz admin — hammasini ko'radi.
+    if (req.admin.role !== "superadmin" && req.admin.filial) {
+      filter["from.region.region"] = req.admin.filial;
+    }
+    const files = await fileModel.find(filter);
     res.status(200).json({ status: "success", data: files });
   } catch (error) {
     res
@@ -283,9 +290,15 @@ router.post("/file/accept/:id", async (req, res) => {
   }
 });
 
-router.get("/files/", async (req, res) => {
+router.get("/files/", adminAuth, async (req, res) => {
   try {
-    const files = await fileModel.find().sort({ status: 1, createdAt: -1 });
+    const filter = {};
+    if (req.admin.role !== "superadmin" && req.admin.filial) {
+      filter["from.region.region"] = req.admin.filial;
+    }
+    const files = await fileModel
+      .find(filter)
+      .sort({ status: 1, createdAt: -1 });
     res.json(files);
   } catch (error) {
     res.status(500).json({ message: error.message });

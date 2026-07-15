@@ -10,6 +10,17 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // "superadmin" — barcha filiallarni ko'radi va admin tayinlaydi.
+    // "admin" — faqat o'z filialini ko'radi.
+    role: {
+      type: String,
+      enum: ["superadmin", "admin"],
+      default: "admin",
+    },
+    // filial kaliti (Nukus / Fargʻona / Samarqand / Toshkent). superadmin uchun bo'sh.
+    filial: {
+      type: String,
+    },
     region: {
       type: Object,
     },

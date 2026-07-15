@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import teacherModel from "../models/teachers.model.js";
 import authMiddleware from "../middleware/auth.middleware.js";
+import { adminAuth } from "../middleware/adminAuth.middleware.js";
 import fs from "fs";
 import path from "path";
 import jobModel from "../models/job.model.js";
@@ -19,14 +20,18 @@ router.get("/teacher/regions", async (req, res) => {
   }
 });
 
-router.get("/teacher/sorted-regions", authMiddleware, async (req, res) => {
+router.get("/teacher/sorted-regions", adminAuth, async (req, res) => {
   try {
     const teachers = await teacherModel.find();
-    const regions = ["Toshkent", "Nukus", "Samarqand", "Fargʻona"];
+    let regions = ["Toshkent", "Nukus", "Samarqand", "Fargʻona"];
+    // Filial admin faqat o'z filialini ko'radi
+    if (req.admin.role !== "superadmin" && req.admin.filial) {
+      regions = regions.filter((r) => r === req.admin.filial);
+    }
     const sortedTeacher = regions.map((item) => {
       return {
         region: item,
-        teachers: teachers.filter((c) => c.region.region == item),
+        teachers: teachers.filter((c) => c.region?.region == item),
       };
     });
     res.json(sortedTeacher);
@@ -287,10 +292,15 @@ router.delete("/teacher/delete/:id", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/teachers", async (req, res) => {
+router.get("/teachers", adminAuth, async (req, res) => {
   try {
+    // Filial admin faqat o'z filialidagi o'qituvchilarni ko'radi
+    const teacherFilter = {};
+    if (req.admin.role !== "superadmin" && req.admin.filial) {
+      teacherFilter["region.region"] = req.admin.filial;
+    }
     // 1. O'qituvchilarni olish (parolni chiqarish yo‘q)
-    const teachers = await teacherModel.find({}, "-password").lean();
+    const teachers = await teacherModel.find(teacherFilter, "-password").lean();
 
     // 2. Barcha ish joylarini olish
     const jobs = await jobModel.find().lean();
