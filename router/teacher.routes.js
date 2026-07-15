@@ -132,7 +132,10 @@ router.get("/teacher/profile", authMiddleware, async (req, res) => {
     const { userId } = req.userData;
     const findTeacher = await teacherModel.findById(userId);
     if (!findTeacher) {
-      return res.json({ status: "error", message: "Bunday Teacher topilmadi" });
+      // Foydalanuvchi o'chirilgan bo'lsa — 401, client login'ga yo'naltiradi
+      return res
+        .status(401)
+        .json({ status: "error", message: "Bunday Teacher topilmadi" });
     }
     res.status(200).json({ status: "success", data: findTeacher });
   } catch (error) {
