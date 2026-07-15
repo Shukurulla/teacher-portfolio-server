@@ -44,7 +44,14 @@ router.post("/teacher/create", async (req, res) => {
   try {
     const { firstName, lastName, phone, password, province } = req.body;
 
-    const findTeacher = await teacherModel.findOne({ phone: phone });
+    // Telefonni kanonik shaklga keltirish: +998XXXXXXXXX
+    const last9 = String(phone).replace(/\D/g, "").slice(-9);
+    const canonicalPhone = "+998" + last9;
+
+    // Oxirgi 9 raqam bo'yicha takrorlanishni tekshirish (format har xil bo'lishi mumkin)
+    const findTeacher = await teacherModel.findOne({
+      phone: { $regex: last9 + "$" },
+    });
 
     if (findTeacher) {
       return res.status(400).json({
@@ -58,7 +65,7 @@ router.post("/teacher/create", async (req, res) => {
     const teacherSchema = {
       firstName,
       lastName,
-      phone,
+      phone: canonicalPhone,
       password: hashedPassword,
       region: province,
     };
@@ -92,7 +99,11 @@ router.post("/teacher/create", async (req, res) => {
 router.post("/teacher/login", async (req, res) => {
   try {
     const { phone, password } = req.body;
-    const findTeacher = await teacherModel.findOne({ phone: phone });
+    // Oxirgi 9 raqam bo'yicha moslashtirish (bazadagi formatlar har xil)
+    const last9 = String(phone).replace(/\D/g, "").slice(-9);
+    const findTeacher = await teacherModel.findOne({
+      phone: { $regex: last9 + "$" },
+    });
     if (!findTeacher) {
       return res
         .status(400)
