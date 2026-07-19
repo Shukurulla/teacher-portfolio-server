@@ -62,7 +62,7 @@ router.post("/admin/login", async (req, res) => {
     if (!comparePassword) {
       return res
         .status(400)
-        .json({ status: "error", message: "Passowrd mos kelmadi" });
+        .json({ status: "error", message: "Password mos kelmadi" });
     }
     const token = jwt.sign({ userId: findAdmin._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",

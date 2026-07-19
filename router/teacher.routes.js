@@ -9,8 +9,61 @@ import path from "path";
 import jobModel from "../models/job.model.js";
 import fileModel from "../models/files.model.js";
 import { provinces } from "../constants/index.js";
+import malakaOshirishModel from "../models/malakaOshirish.model.js";
+import specialAchievementModel from "../models/specialAchievement.model.js";
 
 const router = express.Router();
+
+const getApprovedPoints = (achievements) =>
+  achievements.reduce((sum, ach) => {
+    if (ach.status !== "Tasdiqlandi") return sum;
+    return (
+      sum + (ach.files?.reduce((s, f) => s + (f.rating?.rating || 0), 0) || 0)
+    );
+  }, 0);
+
+const getNextMalaka = (plans) => {
+  const sorted = [...plans].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return sorted.find((plan) => new Date(plan.date) >= today) || sorted[0] || null;
+};
+
+const withTeacherStats = (teacher, jobs, achievements, specials, malakaPlans) => {
+  const teacherId = teacher._id.toString();
+  const teacherJobs = jobs.filter((job) => job.teacher.toString() === teacherId);
+  const teacherAchievements = achievements.filter(
+    (ach) => ach.from.id.toString() === teacherId,
+  );
+  const teacherSpecials = specials.filter(
+    (special) => special.from.id.toString() === teacherId,
+  );
+  const approvedSpecials = teacherSpecials.filter(
+    (special) => special.status === "Tasdiqlandi",
+  );
+  const teacherMalakaPlans = malakaPlans.filter(
+    (plan) => plan.from.id.toString() === teacherId,
+  );
+
+  return {
+    ...teacher,
+    jobs: teacherJobs,
+    jobsCount: teacherJobs.length,
+    normalAchievementsCount: teacherAchievements.length,
+    approvedAchievementsCount: teacherAchievements.filter(
+      (ach) => ach.status === "Tasdiqlandi",
+    ).length,
+    specialAchievementsCount: teacherSpecials.length,
+    approvedSpecialAchievementsCount: approvedSpecials.length,
+    achievementsCount: teacherAchievements.length + approvedSpecials.length,
+    hasSpecial: approvedSpecials.length > 0,
+    specialAchievements: teacherSpecials,
+    totalPoints: getApprovedPoints(teacherAchievements),
+    malakaPlans: teacherMalakaPlans,
+    nextMalaka: getNextMalaka(teacherMalakaPlans),
+  };
+};
 
 router.get("/teacher/regions", async (req, res) => {
   try {
@@ -111,7 +164,7 @@ router.post("/teacher/login", async (req, res) => {
     }
     const comparePassword = await bcrypt.compare(
       password,
-      findTeacher.password
+      findTeacher.password,
     );
     if (!comparePassword) {
       return res
@@ -123,7 +176,7 @@ router.post("/teacher/login", async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "30d",
-      }
+      },
     );
     res.status(200).json({
       token,
@@ -267,7 +320,7 @@ router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
       updateData,
       {
         new: true,
-      }
+      },
     );
 
     res.status(200).json({
@@ -293,6 +346,7 @@ router.delete("/teacher/delete/:id", authMiddleware, async (req, res) => {
     }
 
     await teacherModel.findByIdAndDelete(id);
+    await malakaOshirishModel.deleteMany({ "from.id": id });
     const teachers = await teacherModel.find();
     res.status(200).json({
       status: "success",
@@ -313,41 +367,18 @@ router.get("/teachers", adminAuth, async (req, res) => {
     if (req.admin.role !== "superadmin" && req.admin.filial) {
       teacherFilter["region.region"] = req.admin.filial;
     }
-    // 1. O'qituvchilarni olish (parolni chiqarish yo‘q)
     const teachers = await teacherModel.find(teacherFilter, "-password").lean();
+    const teacherIds = teachers.map((teacher) => teacher._id);
+    const [jobs, achievements, specials, malakaPlans] = await Promise.all([
+      jobModel.find({ teacher: { $in: teacherIds } }).lean(),
+      fileModel.find({ "from.id": { $in: teacherIds } }).lean(),
+      specialAchievementModel.find({ "from.id": { $in: teacherIds } }).lean(),
+      malakaOshirishModel.find({ "from.id": { $in: teacherIds } }).lean(),
+    ]);
 
-    // 2. Barcha ish joylarini olish
-    const jobs = await jobModel.find().lean();
-
-    // 3. Barcha yutuqlarni olish
-    const achievements = await fileModel.find().lean();
-
-    // 4. Har bir o'qituvchini jobs va achievements bilan bog'lash
-    const result = teachers.map((teacher) => {
-      // Ish joylarini ajratish
-      const teacherJobs = jobs.filter(
-        (job) => job.teacher.toString() === teacher._id.toString()
-      );
-
-      // Yutuqlarni ajratish
-      const teacherAchievements = achievements.filter(
-        (ach) => ach.from.id.toString() === teacher._id.toString()
-      );
-
-      return {
-        ...teacher,
-        jobs: teacherJobs,
-        jobsCount: teacherJobs.length,
-        achievementsCount: teacherAchievements.length,
-        totalPoints: teacherAchievements.reduce((sum, ach) => {
-          if (ach.status !== "Tasdiqlandi") return sum;
-          return (
-            sum +
-            (ach.files?.reduce((s, f) => s + (f.rating?.rating || 0), 0) || 0)
-          );
-        }, 0),
-      };
-    });
+    const result = teachers.map((teacher) =>
+      withTeacherStats(teacher, jobs, achievements, specials, malakaPlans),
+    );
 
     res.json(result);
   } catch (error) {
@@ -359,10 +390,18 @@ router.get("/teacher/:id", async (req, res) => {
   try {
     const teacher = await teacherModel
       .findById(req.params.id)
-      .select("-password");
+      .select("-password")
+      .lean();
     if (!teacher)
       return res.status(404).json({ message: "O'qituvchi topilmadi" });
-    res.json(teacher);
+    const [jobs, achievements, specials, malakaPlans] = await Promise.all([
+      jobModel.find({ teacher: req.params.id }).lean(),
+      fileModel.find({ "from.id": req.params.id }).lean(),
+      specialAchievementModel.find({ "from.id": req.params.id }).lean(),
+      malakaOshirishModel.find({ "from.id": req.params.id }).lean(),
+    ]);
+
+    res.json(withTeacherStats(teacher, jobs, achievements, specials, malakaPlans));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

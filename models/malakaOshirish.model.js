@@ -15,14 +15,22 @@ const malakaOshirishSchema = new mongoose.Schema(
     },
     date: { type: Date, required: true },
     filial: { type: String, required: true }, // filial kaliti (default: viloyat filiali)
+    province: {
+      type: String,
+      required: true,
+    },
+    direction: {
+      type: String,
+      required: true,
+    },
     note: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const malakaOshirishModel = mongoose.model(
   "malakaOshirish",
-  malakaOshirishSchema
+  malakaOshirishSchema,
 );
 
 export default malakaOshirishModel;

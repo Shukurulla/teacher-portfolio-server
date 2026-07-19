@@ -16,9 +16,15 @@ const run = async () => {
 
   const existing = await adminModel.findOne({ role: "superadmin" });
   if (existing) {
-    console.log(
-      `Super admin allaqachon mavjud: "${existing.username}". Yangi yaratilmadi.`
-    );
+    existing.username = USERNAME;
+    existing.password = await bcrypt.hash(PASSWORD, 10);
+    existing.role = "superadmin";
+    existing.filial = undefined;
+    await existing.save();
+
+    console.log("✅ Super admin yangilandi:");
+    console.log(`   username: ${existing.username}`);
+    console.log(`   password: ${PASSWORD}`);
     await mongoose.disconnect();
     return;
   }

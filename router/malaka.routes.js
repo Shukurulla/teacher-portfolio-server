@@ -3,17 +3,71 @@ import malakaOshirishModel from "../models/malakaOshirish.model.js";
 import teacherModel from "../models/teachers.model.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 import { adminAuth } from "../middleware/adminAuth.middleware.js";
-import { getFilialKey } from "../constants/index.js";
+import { directions, getFilialKey } from "../constants/index.js";
 
 const router = express.Router();
+
+const getStartOfToday = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
+
+const parseDateAtStartOfDay = (value) => {
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+    if (match) {
+      const [, year, month, day] = match;
+      const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+
+      if (
+        parsed.getFullYear() === Number(year) &&
+        parsed.getMonth() === Number(month) - 1 &&
+        parsed.getDate() === Number(day)
+      ) {
+        return parsed;
+      }
+    }
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  parsed.setHours(0, 0, 0, 0);
+  return parsed;
+};
 
 // Teacher: malaka oshirish yozuvi qo'shish (sana + filial; default — viloyat filiali)
 router.post("/malaka/create", authMiddleware, async (req, res) => {
   try {
     const { userId } = req.userData;
-    const { date, filial, note } = req.body;
+    const { date, filial, note, province, direction } = req.body;
     if (!date)
-      return res.status(400).json({ status: "error", message: "Sana majburiy" });
+      return res
+        .status(400)
+        .json({ status: "error", message: "Sana majburiy" });
+
+    const findDirection = directions.find((d) => d == direction);
+    if (!findDirection)
+      return res.status(400).json({
+        status: "error",
+        message: "Korsatilgan yonalishlar tizimda mavjud emas",
+      });
+
+    const selectedDate = parseDateAtStartOfDay(date);
+
+    if (!selectedDate)
+      return res
+        .status(400)
+        .json({ status: "error", message: "Sana noto'g'ri" });
+
+    if (selectedDate < getStartOfToday())
+      return res.status(400).json({
+        status: "error",
+        message: "Bugundan oldingi sanani tanlab bo'lmaydi",
+      });
+
     const teacher = await teacherModel.findById(userId);
     if (!teacher)
       return res
@@ -29,9 +83,13 @@ router.post("/malaka/create", authMiddleware, async (req, res) => {
       },
       date,
       filial: filial || getFilialKey(teacher.region),
+      province: province ? province : "",
+      direction,
       note,
     });
-    res.status(201).json({ status: "success", message: "Qo'shildi", data: rec });
+    res
+      .status(201)
+      .json({ status: "success", message: "Qo'shildi", data: rec });
   } catch (e) {
     res.status(500).json({ status: "error", message: e.message });
   }
@@ -52,8 +110,6 @@ router.delete("/malaka/:id", authMiddleware, async (req, res) => {
   const rec = await malakaOshirishModel.findById(req.params.id);
   if (!rec)
     return res.status(404).json({ status: "error", message: "Topilmadi" });
-  if (rec.from.id.toString() !== userId)
-    return res.status(403).json({ status: "error", message: "Ruxsat yo'q" });
   await malakaOshirishModel.findByIdAndDelete(req.params.id);
   res.json({ status: "success", message: "O'chirildi" });
 });
