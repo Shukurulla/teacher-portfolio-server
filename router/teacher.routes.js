@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import jobModel from "../models/job.model.js";
 import fileModel from "../models/files.model.js";
-import { provinces } from "../constants/index.js";
+import { provinces, DISTRICTS } from "../constants/index.js";
 import malakaOshirishModel from "../models/malakaOshirish.model.js";
 import specialAchievementModel from "../models/specialAchievement.model.js";
 
@@ -73,6 +73,16 @@ router.get("/teacher/regions", async (req, res) => {
   }
 });
 
+router.get("/teacher/districts/:province", async (req, res) => {
+  try {
+    const { province } = req.params;
+    const districts = DISTRICTS[province] || [];
+    res.json({ data: districts, status: "success" });
+  } catch (error) {
+    res.json({ message: error.message, status: "error" });
+  }
+});
+
 router.get("/teacher/sorted-regions", adminAuth, async (req, res) => {
   try {
     const teachers = await teacherModel.find();
@@ -95,7 +105,7 @@ router.get("/teacher/sorted-regions", adminAuth, async (req, res) => {
 
 router.post("/teacher/create", async (req, res) => {
   try {
-    const { firstName, lastName, phone, password, province } = req.body;
+    const { firstName, lastName, phone, password, province, district } = req.body;
 
     // Telefonni kanonik shaklga keltirish: +998XXXXXXXXX
     const last9 = String(phone).replace(/\D/g, "").slice(-9);
@@ -121,6 +131,7 @@ router.post("/teacher/create", async (req, res) => {
       phone: canonicalPhone,
       password: hashedPassword,
       region: province,
+      district: district || "",
     };
 
     const teacher = await teacherModel.create(teacherSchema);
@@ -362,7 +373,7 @@ router.delete("/teacher/delete/:id", authMiddleware, async (req, res) => {
 
 router.get("/teachers", adminAuth, async (req, res) => {
   try {
-    // Filial admin faqat o'z filialidagi o'qituvchilarni ko'radi
+    // Filial admin faqat o'z filialidagi mutaxassislarni ko'radi
     const teacherFilter = {};
     if (req.admin.role !== "superadmin" && req.admin.filial) {
       teacherFilter["region.region"] = req.admin.filial;

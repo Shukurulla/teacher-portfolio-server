@@ -13,9 +13,9 @@ const SECTION_5 = "Sport psixologlari";
 const SECTION_6 =
   "Oliy ta'lim muassasalarining jismoniy tarbiya va sport yo'nalishlari bo'yicha rahbar va pedagog kadrlari";
 const SECTION_7 =
-  "Kasbiy ta'lim tashkilotlari jismoniy tarbiya fani o'qituvchilari (jismoniy tarbiya va sportga ixtisoslashtirilganlar bundan mustasno)";
+  "Kasbiy ta'lim tashkilotlari jismoniy tarbiya fani mutaxassislari (jismoniy tarbiya va sportga ixtisoslashtirilganlar bundan mustasno)";
 const SECTION_8 =
-  "Umumiy o'rta va o'rta maxsus ta'lim tashkilotlari jismoniy tarbiya fani o'qituvchilari";
+  "Umumiy o'rta va o'rta maxsus ta'lim tashkilotlari jismoniy tarbiya fani mutaxassislari";
 const SECTION_9 =
   "Maktabgacha ta'lim tashkilotlari jismoniy tarbiya yo'riqchilari";
 

@@ -27,6 +27,10 @@ const teacherSchema = new mongoose.Schema(
       type: Object,
       required: true,
     },
+    district: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

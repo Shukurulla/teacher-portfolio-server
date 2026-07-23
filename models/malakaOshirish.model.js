@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-// Malaka oshirish yozuvi — o'qituvchi qachon va qaysi filialga borishi
+// Malaka oshirish yozuvi — mutaxassis qachon va qaysi filialga borishi
 const malakaOshirishSchema = new mongoose.Schema(
   {
     from: {

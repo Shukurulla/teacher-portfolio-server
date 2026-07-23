@@ -14,6 +14,14 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    province: {
+      type: Object,
+      default: null,
+    },
+    district: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,
