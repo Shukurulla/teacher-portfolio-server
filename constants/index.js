@@ -110,7 +110,7 @@ export const getFilialByKey = (key) =>
 export const SPECIAL_ITEMS = [
   "O'zbekiston Respublikasida xizmat ko'rsatgan sport ustozi faxriy unvoni",
   "O'zbekiston Respublikasida xizmat ko'rsatgan yoshlar murabbiysi faxriy unvoni",
-  "O'zbekiston Respublikasi xalq o'qituvchisi faxriy unvoni",
+  "O'zbekiston Respublikasi xalq Mutaxassissi faxriy unvoni",
   "O'zbekiston iftixori faxriy unvoni",
   "O'zbekiston Respublikasida xizmat ko'rsatgan sportchi faxriy unvoni",
   "So'nggi 4 yilda Olimpiya va Paralimpiya o'yinlarida g'olib va sovrindor bo'lgan sportchilar va ularni tayyorlagan trenerlar",
@@ -123,9 +123,9 @@ export const SPECIAL_ITEMS = [
   "Xalqaro shaxmat federatsiyasi (FIDE) reytingida 1 800 va undan yuqori ball",
   "Qoraqalpog'iston Respublikasida xizmat ko'rsatgan sport ustozi faxriy unvoni",
   "Qoraqalpog'iston Respublikasida xizmat ko'rsatgan yoshlar murabbiysi faxriy unvoni",
-  "Qoraqalpog'iston Respublikasi xalq ta'limi o'qituvchisi faxriy unvoni",
+  "Qoraqalpog'iston Respublikasi xalq ta'limi Mutaxassissi faxriy unvoni",
   "Qoraqalpog'iston Respublikasida xizmat ko'rsatgan sportchi faxriy unvoni",
-  "Tuman(shahar)larning 'Eng yaxshi maktab sport klubi' reytingida 1–5-o'rinni egallagan maktab jismoniy tarbiya o'qituvchilari",
+  "Tuman(shahar)larning 'Eng yaxshi maktab sport klubi' reytingida 1–5-o'rinni egallagan maktab jismoniy tarbiya Mutaxassislari",
 ];
 
 // O'zbekiston viloyatlari va tumanlar

@@ -40,7 +40,7 @@ router.post("/special/upload", authMiddleware, async (req, res) => {
     if (!teacher) {
       return res
         .status(404)
-        .json({ status: "error", message: "O'qituvchi topilmadi" });
+        .json({ status: "error", message: "Mutaxassis topilmadi" });
     }
 
     const uploadDir = path.join(__dirname, "../public/files");
@@ -105,7 +105,9 @@ router.get("/special/new", adminAuth, async (req, res) => {
   const filter = { status: "Tekshirilmoqda" };
   if (req.admin.role !== "superadmin" && req.admin.filial)
     filter["from.region.region"] = req.admin.filial;
-  const data = await specialAchievementModel.find(filter).sort({ createdAt: -1 });
+  const data = await specialAchievementModel
+    .find(filter)
+    .sort({ createdAt: -1 });
   res.json({ status: "success", data });
 });
 
@@ -140,7 +142,7 @@ router.post("/special/review/:id", adminAuth, async (req, res) => {
           date: new Date(),
         },
       },
-      { new: true }
+      { new: true },
     );
     res.json({ status: "success", message: "Saqlandi", data: rec });
   } catch (e) {

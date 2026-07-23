@@ -27,12 +27,22 @@ const getNextMalaka = (plans) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  return sorted.find((plan) => new Date(plan.date) >= today) || sorted[0] || null;
+  return (
+    sorted.find((plan) => new Date(plan.date) >= today) || sorted[0] || null
+  );
 };
 
-const withTeacherStats = (teacher, jobs, achievements, specials, malakaPlans) => {
+const withTeacherStats = (
+  teacher,
+  jobs,
+  achievements,
+  specials,
+  malakaPlans,
+) => {
   const teacherId = teacher._id.toString();
-  const teacherJobs = jobs.filter((job) => job.teacher.toString() === teacherId);
+  const teacherJobs = jobs.filter(
+    (job) => job.teacher.toString() === teacherId,
+  );
   const teacherAchievements = achievements.filter(
     (ach) => ach.from.id.toString() === teacherId,
   );
@@ -105,7 +115,8 @@ router.get("/teacher/sorted-regions", adminAuth, async (req, res) => {
 
 router.post("/teacher/create", async (req, res) => {
   try {
-    const { firstName, lastName, phone, password, province, district } = req.body;
+    const { firstName, lastName, phone, password, province, district } =
+      req.body;
 
     // Telefonni kanonik shaklga keltirish: +998XXXXXXXXX
     const last9 = String(phone).replace(/\D/g, "").slice(-9);
@@ -260,7 +271,7 @@ router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
     if (!teacher) {
       return res.status(404).json({
         status: "error",
-        message: "O'qituvchi topilmadi",
+        message: "Mutaxassis topilmadi",
       });
     }
 
@@ -336,7 +347,7 @@ router.put("/teacher/edit/:id", authMiddleware, async (req, res) => {
 
     res.status(200).json({
       status: "success",
-      message: "O'qituvchi muvaffaqiyatli yangilandi",
+      message: "Mutaxassis muvaffaqiyatli yangilandi",
       data: updatedTeacher,
     });
   } catch (error) {
@@ -404,7 +415,7 @@ router.get("/teacher/:id", async (req, res) => {
       .select("-password")
       .lean();
     if (!teacher)
-      return res.status(404).json({ message: "O'qituvchi topilmadi" });
+      return res.status(404).json({ message: "Mutaxassis topilmadi" });
     const [jobs, achievements, specials, malakaPlans] = await Promise.all([
       jobModel.find({ teacher: req.params.id }).lean(),
       fileModel.find({ "from.id": req.params.id }).lean(),
@@ -412,7 +423,9 @@ router.get("/teacher/:id", async (req, res) => {
       malakaOshirishModel.find({ "from.id": req.params.id }).lean(),
     ]);
 
-    res.json(withTeacherStats(teacher, jobs, achievements, specials, malakaPlans));
+    res.json(
+      withTeacherStats(teacher, jobs, achievements, specials, malakaPlans),
+    );
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

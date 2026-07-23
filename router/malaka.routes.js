@@ -72,7 +72,7 @@ router.post("/malaka/create", authMiddleware, async (req, res) => {
     if (!teacher)
       return res
         .status(404)
-        .json({ status: "error", message: "O'qituvchi topilmadi" });
+        .json({ status: "error", message: "Mutaxassis topilmadi" });
 
     const rec = await malakaOshirishModel.create({
       from: {

@@ -48,18 +48,18 @@ router.post("/file/upload", async (req, res) => {
 
     const title = req.body.title;
 
-    // O'qituvchini tekshirish
+    // Mutaxassisni tekshirish
     const findTeacher = await teacherModel.findById(req.body.teacherId);
     if (!findTeacher) {
       return res.status(400).json({
         status: "error",
-        message: "O'qituvchi topilmadi",
+        message: "Mutaxassis topilmadi",
       });
     }
 
     // Yutuqni tekshirish
     const findAchievment = await AchievmentsModel.findById(
-      req.body.achievmentId
+      req.body.achievmentId,
     );
     if (!findAchievment) {
       return res.status(400).json({
@@ -117,8 +117,7 @@ router.post("/file/upload", async (req, res) => {
       // Fayl ma'lumotlarini saqlash
       processedFiles.push({
         fileUrl: `/files/${fileName}`,
-        fileTitle:
-          uploadedFiles.length > 1 ? `${title} (${i + 1})` : title,
+        fileTitle: uploadedFiles.length > 1 ? `${title} (${i + 1})` : title,
         // toifa (ball) admin tasdiqlashda belgilanadi
       });
     }
@@ -297,7 +296,7 @@ router.post("/file/accept/:id", async (req, res) => {
           inspector: { ...findAdmin, date: new Date() },
         },
       },
-      { new: true } // yangilangan versiyasini qaytarish
+      { new: true }, // yangilangan versiyasini qaytarish
     );
 
     res.json({
@@ -390,7 +389,7 @@ router.patch("/files/:id", async (req, res) => {
     const updatedFile = await fileModel.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true } // yangilangan versiyasini qaytarish
+      { new: true }, // yangilangan versiyasini qaytarish
     );
 
     res.json({
