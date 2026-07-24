@@ -423,11 +423,10 @@ router.get("/teacher/:id", async (req, res) => {
       malakaOshirishModel.find({ "from.id": req.params.id }).lean(),
     ]);
 
-    // Debug log
-    console.log("Teacher ID:", req.params.id);
-    console.log("Jobs count:", jobs.length);
-    console.log("Achievements count:", achievements.length);
-    console.log("Achievements:", JSON.stringify(achievements, null, 2));
+    // Debug: Tekshirish uchun
+    console.log("Jobs found:", jobs.map(j => j._id));
+    const uniqueJobIds = [...new Set(achievements.map(a => a.from?.job))];
+    console.log("Job IDs in achievements:", uniqueJobIds);
 
     res.json(
       withTeacherStats(teacher, jobs, achievements, specials, malakaPlans),

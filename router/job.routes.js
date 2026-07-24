@@ -84,9 +84,14 @@ router.delete("/job/:id", authMiddleware, async (req, res) => {
       });
     }
     await jobModel.findByIdAndDelete(findJob._id);
+    
+    // To'g'ri filtr - from.job string
     const findFiles = await fileModel.find({
-      "from.job._id": findJob._id,
+      "from.job": findJob._id.toString(),
     });
+    
+    console.log(`Deleting job ${findJob._id}, found ${findFiles.length} related achievements`);
+    
     for (let i = 0; i < findFiles.length; i++) {
       await fileModel.findByIdAndDelete(findFiles[i]._id);
     }
