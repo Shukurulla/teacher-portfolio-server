@@ -5,14 +5,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// MongoDB ga ulanish
-mongoose
-  .connect(process.env.MONGO_URL)
-  .then(() => console.log("Database connected"))
-  .catch((err) => console.log("Database connection error:", err));
-
 async function cleanupOrphanAchievements() {
   try {
+    // MongoDB ga ulanish
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Database connected\n");
+    
     console.log("Starting cleanup...");
 
     // Barcha achievementlarni olish
@@ -52,6 +50,7 @@ async function cleanupOrphanAchievements() {
       console.log("\n✅ No orphan achievements found. Database is clean!");
     }
 
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error("Error during cleanup:", error);
