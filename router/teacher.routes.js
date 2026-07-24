@@ -423,6 +423,12 @@ router.get("/teacher/:id", async (req, res) => {
       malakaOshirishModel.find({ "from.id": req.params.id }).lean(),
     ]);
 
+    // Debug log
+    console.log("Teacher ID:", req.params.id);
+    console.log("Jobs count:", jobs.length);
+    console.log("Achievements count:", achievements.length);
+    console.log("Achievements:", JSON.stringify(achievements, null, 2));
+
     res.json(
       withTeacherStats(teacher, jobs, achievements, specials, malakaPlans),
     );
