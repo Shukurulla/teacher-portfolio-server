@@ -7,6 +7,13 @@ import { directions, getFilialKey } from "../constants/index.js";
 
 const router = express.Router();
 
+// Yo'nalish nomlarini solishtirish uchun (bosh rim raqam/belgilar farqiga chidamli)
+const normalizeDirection = (t) =>
+  String(t || "")
+    .replace(/^\s*[IVX]+\s*\.?\s*/i, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+
 const getStartOfToday = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -48,7 +55,10 @@ router.post("/malaka/create", authMiddleware, async (req, res) => {
         .status(400)
         .json({ status: "error", message: "Sana majburiy" });
 
-    const findDirection = directions.find((d) => d == direction);
+    // Yo'nalishni moslashuvchan solishtiramiz va kanonik ko'rinishda saqlaymiz.
+    const findDirection = directions.find(
+      (d) => normalizeDirection(d) === normalizeDirection(direction)
+    );
     if (!findDirection)
       return res.status(400).json({
         status: "error",
@@ -84,7 +94,7 @@ router.post("/malaka/create", authMiddleware, async (req, res) => {
       date,
       filial: filial || getFilialKey(teacher.region),
       province: province ? province : "",
-      direction,
+      direction: findDirection,
       note,
     });
     res
@@ -104,14 +114,76 @@ router.get("/malaka/my", authMiddleware, async (req, res) => {
   res.json({ status: "success", data });
 });
 
+// Teacher: o'z arizasini tahrirlash
+router.put("/malaka/:id", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.userData;
+    const rec = await malakaOshirishModel.findById(req.params.id);
+    if (!rec)
+      return res.status(404).json({ status: "error", message: "Topilmadi" });
+    // Faqat o'z arizasini tahrirlay oladi
+    if (rec.from.id.toString() !== userId)
+      return res.status(403).json({ status: "error", message: "Ruxsat yo'q" });
+
+    const { date, filial, note, province, direction } = req.body;
+    const update = {};
+
+    if (date !== undefined) {
+      const selectedDate = parseDateAtStartOfDay(date);
+      if (!selectedDate)
+        return res
+          .status(400)
+          .json({ status: "error", message: "Sana noto'g'ri" });
+      if (selectedDate < getStartOfToday())
+        return res.status(400).json({
+          status: "error",
+          message: "Bugundan oldingi sanani tanlab bo'lmaydi",
+        });
+      update.date = date;
+    }
+
+    if (direction !== undefined) {
+      const findDirection = directions.find(
+        (d) => normalizeDirection(d) === normalizeDirection(direction)
+      );
+      if (!findDirection)
+        return res.status(400).json({
+          status: "error",
+          message: "Korsatilgan yonalishlar tizimda mavjud emas",
+        });
+      update.direction = findDirection;
+    }
+
+    if (filial !== undefined) update.filial = filial;
+    if (province !== undefined) update.province = province || "";
+    if (note !== undefined) update.note = note;
+
+    const updated = await malakaOshirishModel.findByIdAndUpdate(
+      req.params.id,
+      update,
+      { new: true }
+    );
+    res.json({ status: "success", message: "Yangilandi", data: updated });
+  } catch (e) {
+    res.status(500).json({ status: "error", message: e.message });
+  }
+});
+
 // Teacher: o'chirish
 router.delete("/malaka/:id", authMiddleware, async (req, res) => {
-  const { userId } = req.userData;
-  const rec = await malakaOshirishModel.findById(req.params.id);
-  if (!rec)
-    return res.status(404).json({ status: "error", message: "Topilmadi" });
-  await malakaOshirishModel.findByIdAndDelete(req.params.id);
-  res.json({ status: "success", message: "O'chirildi" });
+  try {
+    const { userId } = req.userData;
+    const rec = await malakaOshirishModel.findById(req.params.id);
+    if (!rec)
+      return res.status(404).json({ status: "error", message: "Topilmadi" });
+    // Faqat o'z arizasini o'chira oladi
+    if (rec.from.id.toString() !== userId)
+      return res.status(403).json({ status: "error", message: "Ruxsat yo'q" });
+    await malakaOshirishModel.findByIdAndDelete(req.params.id);
+    res.json({ status: "success", message: "O'chirildi" });
+  } catch (e) {
+    res.status(500).json({ status: "error", message: e.message });
+  }
 });
 
 // Admin/superadmin: ro'yxat — filial bo'yicha (kim qachon qayerga)

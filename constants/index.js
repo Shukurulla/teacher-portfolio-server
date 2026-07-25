@@ -23,15 +23,15 @@ export const FILIALS = [
 ];
 
 export const directions = [
-  "I.Sport taʼlim muassasalari rahbar va oʻrinbosarlari",
-  "II. Sport taʼlim muassasalari yoʻriqchi-uslubchilari  ",
+  "I. Sport taʼlim muassasalari rahbar va oʻrinbosarlari",
+  "II. Sport taʼlim muassasalari yoʻriqchi-uslubchilari",
   "III. Sport turlarini rivojlantirish respublika markazlari, Olimpiya va paralimpiya sport turlariga tayyorlash markazlari, ixtisoslashtirilgan sport maktablari, ixtisoslashtirilgan olimpiya zaxiralari maktablari trenerlari",
   "IV. Sport maktablari trenerlari",
   "V. Sport psixologlari",
   "VI. Oliy taʼlim muassasalarining jismoniy tarbiya va sport yoʻnalishlari boʻyicha rahbar va pedagog kadrlari",
-  "VII. Kasbiy taʼlim tashkilotlari jismoniy tarbiya fani oʻqituvchilari(jismoniy tarbiya va sportga ixtisoslashtirilganlar bundan mustasno)",
+  "VII. Kasbiy taʼlim tashkilotlari jismoniy tarbiya fani oʻqituvchilari (jismoniy tarbiya va sportga ixtisoslashtirilganlar bundan mustasno)",
   "VIII. Umumiy oʻrta va oʻrta maxsus taʼlim tashkilotlari jismoniy tarbiya fani oʻqituvchilari",
-  "IX. Maktabgacha taʼlim tashkilotlari jismoniy tarbiya yuriqchilari",
+  "IX. Maktabgacha taʼlim tashkilotlari jismoniy tarbiya yoʻriqchilari",
 ];
 
 export const FILIAL_KEYS = FILIALS.map((f) => f.key);
