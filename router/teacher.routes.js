@@ -438,8 +438,29 @@ router.get("/teacher/:id", async (req, res) => {
 
 router.get("/teacher/:teacherId/jobs", async (req, res) => {
   try {
-    const jobs = await jobModel.find({ teacher: req.params.teacherId });
-    res.json(jobs);
+    const jobs = await jobModel.find({ teacher: req.params.teacherId }).lean();
+
+    // Har bir ish joyi uchun tasdiqlangan yutuqlardan to'plangan ball.
+    // Yutuq (file) o'zi qaysi ish joyiga tegishli ekani from.job orqali bog'langan.
+    const files = await fileModel
+      .find({ "from.id": req.params.teacherId, status: "Tasdiqlandi" })
+      .lean();
+    const pointsByJob = {};
+    for (const f of files) {
+      const jobId = f.from?.job?.toString();
+      if (!jobId) continue;
+      const s = (f.files || []).reduce(
+        (a, x) => a + (x.rating?.rating || 0),
+        0,
+      );
+      pointsByJob[jobId] = (pointsByJob[jobId] || 0) + s;
+    }
+
+    const withPoints = jobs.map((j) => ({
+      ...j,
+      points: pointsByJob[j._id.toString()] || 0,
+    }));
+    res.json(withPoints);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
