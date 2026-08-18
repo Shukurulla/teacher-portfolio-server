@@ -56,9 +56,24 @@ const withTeacherStats = (
     (plan) => plan.from.id.toString() === teacherId,
   );
 
+  // Har bir ish joyi uchun alohida statistika: shu ish joyiga tegishli
+  // (from.job) yutuqlar soni va tasdiqlangan yutuqlardan to'plangan ball.
+  // Reytingda bir mutaxassis har bir ish joyi bo'yicha alohida ko'rsatiladi.
+  const teacherJobsWithStats = teacherJobs.map((job) => {
+    const jobId = job._id.toString();
+    const jobAchievements = teacherAchievements.filter(
+      (ach) => ach.from?.job?.toString() === jobId,
+    );
+    return {
+      ...job,
+      achievementsCount: jobAchievements.length,
+      points: getApprovedPoints(jobAchievements),
+    };
+  });
+
   return {
     ...teacher,
-    jobs: teacherJobs,
+    jobs: teacherJobsWithStats,
     jobsCount: teacherJobs.length,
     normalAchievementsCount: teacherAchievements.length,
     approvedAchievementsCount: teacherAchievements.filter(
